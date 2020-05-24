@@ -1,12 +1,13 @@
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
+using SimpleOAuth.Authentication;
 using SimpleOAuth.Models;
 using System;
-using System.Text;
 
 namespace SimpleOAuth
 {
@@ -43,8 +44,23 @@ namespace SimpleOAuth
         public static IApplicationBuilder UseSimpleOAuth(this IApplicationBuilder app)
         {
             app.UseAuthentication();
-   
+            app.UseAuthorization();
+
             return app;
+        }
+
+        public static IEndpointRouteBuilder AddAuth(this IEndpointRouteBuilder endpoints, IApplicationBuilder app)
+        {
+            var router = "";
+            using (var scope = app.ApplicationServices.GetService<IServiceScopeFactory>().CreateScope())
+            {
+                var options = scope.ServiceProvider.GetRequiredService<OAuthSimpleOption>();
+                router = options.AuthRouter;
+            }
+
+            endpoints.MapPost(router, context => context.LoginOAuth(app));
+
+            return endpoints;
         }
     }
 }

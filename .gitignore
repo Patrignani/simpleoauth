@@ -4,3 +4,4 @@ src/test/bin/
 src/test/obj/
 src/XUnitTestProject/bin/
 src/XUnitTestProject/obj/
+.vs/

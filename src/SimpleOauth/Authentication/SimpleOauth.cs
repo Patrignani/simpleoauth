@@ -10,8 +10,6 @@ using System;
 using SimpleOAuth.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
-using System.Linq;
-using System.Collections.Generic;
 using System.Security.Claims;
 
 namespace SimpleOAuth.Authentication
@@ -51,7 +49,7 @@ namespace SimpleOAuth.Authentication
         }
 
         private static void CreateResponsePassword(
-            AuthorizationRolesPassword authorizationRoles, 
+            AuthorizationRolesPassword authorizationRoles,
             OAuthSimpleOption options,
             JwtValue value
             )
@@ -67,14 +65,12 @@ namespace SimpleOAuth.Authentication
         }
 
         private static void CreateResponseClient(
-            AuthorizationRolesClient authorizationRoles, 
+            AuthorizationRolesClient authorizationRoles,
             OAuthSimpleOption options,
              JwtValue value)
         {
             if (authorizationRoles.Authorized)
             {
-              
-                var handler = new JwtSecurityTokenHandler();
                 var tokenValue = new AuthorizationClientPass
                 {
                     Access_token = GenerateToken(options, authorizationRoles),
@@ -92,7 +88,6 @@ namespace SimpleOAuth.Authentication
 
         private static string CreateTokenRefresh(string token, OAuthSimpleOption options, string refreshToken)
         {
-            var handler = new JwtSecurityTokenHandler();
             var tokenValue = new AuthorizationRefreshPass
             {
                 Access_token = token,
@@ -147,7 +142,7 @@ namespace SimpleOAuth.Authentication
         }
 
         public static async Task<JwtValue> CreateTokenAsync(JObject authorize, IAuthorizationRoles authorizationRoles, OAuthSimpleOption options)
-        
+
         {
             var @return = new JwtValue() { StatusCode = StatusCodes.Status200OK };
 

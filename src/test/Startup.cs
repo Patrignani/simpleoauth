@@ -45,11 +45,11 @@ namespace test
             app.UseRouting();
 
             app.UseSimpleOAuth();
-            app.UseAuthorization();
+       
 
             app.UseEndpoints(endpoints =>
             {
-                endpoints.MapPost("/", context => context.LoginOAuth(app));
+                endpoints.AddAuth(app);
                 endpoints.MapControllers();
             });
         }

@@ -91,7 +91,7 @@ namespace XUnitTestProject
 
             var tokenValidd = ValidateToken(pass.Access_token);
 
-            Assert.True(tokenValidd && jwtValue.StatusCode == 200);
+            Assert.True(tokenValidd && jwtValue.StatusCode == 1);
 
         }
 

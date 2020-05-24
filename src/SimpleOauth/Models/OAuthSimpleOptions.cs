@@ -1,7 +1,3 @@
-using System;
-using System.Collections.Generic;
-using System.Text;
-
 namespace SimpleOAuth.Models
 {
     public class OAuthSimpleOption
@@ -10,6 +6,7 @@ namespace SimpleOAuth.Models
         {
             Audience = "";
             Issuer = "";
+            AuthRouter = "/";
         }
 
         public void AddKeyToken(string key)
@@ -23,15 +20,9 @@ namespace SimpleOAuth.Models
             ExpireTimeMinutes = time;
         }
 
-        public void AddAudience(string audience)
-        {
-            Audience = audience;
-        }
-
-        public void AddIssuer(string issuer)
-        {
-            Issuer = issuer;
-        }
+        public void AddAudience(string audience) => Audience = audience;
+        public void AddIssuer(string issuer) => Issuer = issuer;
+        public void AddAtuhRouter(string authRouter) => AuthRouter = authRouter;
 
         public string Key { get; private set; }
         //aud (audience) = Destinatário do token, representa a aplicação que 
@@ -39,6 +30,7 @@ namespace SimpleOAuth.Models
         public int ExpireTimeMinutes { get; private set; }
         //iss(issuer) = Emissor do token;
         public string Issuer { get; private set; }
+        public string AuthRouter { get; private set; }
         public SigningConfigurations SigningConfigurations { get; private set; }
     }
 }
