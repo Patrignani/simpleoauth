@@ -5,6 +5,7 @@ using System.Threading.Tasks;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
+using SimpleOAuth.Models;
 
 namespace test.Controllers
 {
@@ -12,19 +13,27 @@ namespace test.Controllers
     [ApiController]
     public class TestController : ControllerBase
     {
+        private readonly TokenRead _token;
+        public TestController(TokenRead token)
+        {
+            _token = token;
+        }
+
         // GET: api/Test
         [Authorize]
         [HttpGet]
-        public IEnumerable<string> Get()
+        public IActionResult Get()
         {
-            return new string[] { "value1", "value2" };
+            var id = _token.GetValue("Id");
+            return Ok(_token.Claims);
         }
 
         // GET: api/Test/5
-        [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
+        [HttpGet("{id}")]
+        [Authorize(Roles ="test")]
+        public IActionResult GetId(int id)
         {
-            return "value";
+            return Ok("aaa");
         }
 
         // POST: api/Test

@@ -1,6 +1,7 @@
 
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.AspNetCore.Builder;
+using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Routing;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Options;
@@ -17,7 +18,8 @@ namespace SimpleOAuth
         {
             var config = new OAuthSimpleOption();
             options(config);
-          
+
+            services.AddHttpContextAccessor();
 
             services.AddAuthentication(x =>
             {
@@ -37,6 +39,13 @@ namespace SimpleOAuth
 
             services.Configure(options);
             services.AddSingleton(resolver => resolver.GetRequiredService<IOptions<OAuthSimpleOption>>().Value);
+            services.AddScoped(provider =>
+            {
+                return new TokenRead(provider.GetService<IHttpContextAccessor>()
+                    .HttpContext?.Request?.Headers["Authorization"], provider.GetService<IHttpContextAccessor>()
+                    .HttpContext?.Request?.HttpContext?.Connection?.RemoteIpAddress);
+
+            });
 
             return services;
         }
