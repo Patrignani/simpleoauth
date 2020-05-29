@@ -24,7 +24,6 @@ namespace XUnitTestProject
         {
             _options = new OAuthSimpleOption();
             _options.AddKeyToken("kl3fj8990asfd123klbvc7m243hjioa90142mkrtdsfd789a");
-            _options.AddExpireTimeMinutes(1);
             _authorizationRoles = new AuthorizationRoles();
         }
 

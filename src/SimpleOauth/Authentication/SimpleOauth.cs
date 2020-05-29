@@ -11,6 +11,7 @@ using SimpleOAuth.Models;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using System.Text;
 
 namespace SimpleOAuth.Authentication
 {
@@ -39,6 +40,9 @@ namespace SimpleOAuth.Authentication
 
             context.Response.StatusCode = jwtValue.StatusCode;
 
+            if (!String.IsNullOrEmpty(jwtValue.Error))
+                await context.Response.Body.WriteAsync(Encoding.ASCII.GetBytes(jwtValue.Error));
+
             if (context.Response.StatusCode == 200)
             {
                 context.Response.ContentType = "application/json";
@@ -56,7 +60,7 @@ namespace SimpleOAuth.Authentication
         {
             if (authorizationRoles.Authorized)
             {
-                value.JsonReturn = CreateTokenRefresh(GenerateToken(options, authorizationRoles), options, authorizationRoles.RefreshToken);
+                value.JsonReturn = CreateTokenRefresh(GenerateToken(options, authorizationRoles, authorizationRoles), options, authorizationRoles, authorizationRoles.RefreshToken);
             }
             else
             {
@@ -73,8 +77,8 @@ namespace SimpleOAuth.Authentication
             {
                 var tokenValue = new AuthorizationClientPass
                 {
-                    Access_token = GenerateToken(options, authorizationRoles),
-                    Expires_in = DateTime.UtcNow.AddMinutes(options.ExpireTimeMinutes).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'"),
+                    Access_token = GenerateToken(options, authorizationRoles, authorizationRoles),
+                    Expires_in = DateTime.UtcNow.AddMinutes(authorizationRoles.ExpireTimeMinutes == 0 ? options.DefaultExpireTimeMinutes : authorizationRoles.ExpireTimeMinutes).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'"),
                     Token_type = "Bearer"
                 };
 
@@ -86,12 +90,13 @@ namespace SimpleOAuth.Authentication
             }
         }
 
-        private static string CreateTokenRefresh(string token, OAuthSimpleOption options, string refreshToken)
+        private static string CreateTokenRefresh(string token, OAuthSimpleOption options, AuthorizationRolesBasic authorizationRoles, string refreshToken)
         {
             var tokenValue = new AuthorizationRefreshPass
             {
                 Access_token = token,
-                Expires_in = DateTime.UtcNow.AddMinutes(options.ExpireTimeMinutes).ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'"),
+                Expires_in = DateTime.UtcNow.AddMinutes(authorizationRoles.ExpireTimeMinutes == 0 ? options.DefaultExpireTimeMinutes : authorizationRoles.ExpireTimeMinutes)
+                .ToString("yyyy'-'MM'-'dd'T'HH':'mm':'ss'.'fff'Z'"),
                 Token_type = "Bearer",
                 Refresh_token = refreshToken
             };
@@ -127,14 +132,14 @@ namespace SimpleOAuth.Authentication
             return grantType;
         }
 
-        public static string GenerateToken(OAuthSimpleOption options, AuthorizationRolesBasic authorization)
+        public static string GenerateToken(OAuthSimpleOption options, AuthorizationRolesBasic authorization, AuthorizationRolesBasic roles)
         {
             var tokenHandler = new JwtSecurityTokenHandler();
 
             var tokenDescriptor = new SecurityTokenDescriptor
             {
                 Subject = new ClaimsIdentity(authorization.Claims),
-                Expires = DateTime.UtcNow.AddMinutes(options.ExpireTimeMinutes),
+                Expires = DateTime.UtcNow.AddMinutes(roles.ExpireTimeMinutes == 0 ? options.DefaultExpireTimeMinutes : roles.ExpireTimeMinutes),
                 SigningCredentials = options.SigningConfigurations.SigningCredentials,
             };
             var token = tokenHandler.CreateToken(tokenDescriptor);
@@ -161,17 +166,17 @@ namespace SimpleOAuth.Authentication
                         case Const.Types.Password:
                             var password = authorize.ToObject<Models.OAuthPassword>();
                             var passwordRoles = await authorizationRoles.PasswordAuthorizationAsync(password);
-                            CreateResponsePassword(passwordRoles, options, @return);
+                            ExistError(passwordRoles, CreateResponsePassword, options, @return);
                             break;
                         case Const.Types.Client:
                             var client = authorize.ToObject<Models.OAuthClient>();
                             var clientRoles = await authorizationRoles.ClientCredentialsAuthorizationAsync(client);
-                            CreateResponseClient(clientRoles, options, @return);
+                            ExistError(clientRoles, CreateResponseClient, options, @return);
                             break;
                         case Const.Types.RefreshToken:
                             var refresh = authorize.ToObject<Models.OAuthRefreshToken>();
                             var refreshRoles = await authorizationRoles.RefreshTokenCredentialsAuthorizationAsync(refresh);
-                            CreateResponsePassword(refreshRoles, options, @return);
+                            ExistError(refreshRoles, CreateResponsePassword, options, @return);
                             break;
                         default:
                             @return.StatusCode = StatusCodes.Status401Unauthorized;
@@ -181,10 +186,35 @@ namespace SimpleOAuth.Authentication
                 catch (Exception e)
                 {
                     @return.StatusCode = StatusCodes.Status401Unauthorized;
+                    @return.Error = e.GetBaseException().Message;
                 }
             }
 
             return @return;
+        }
+
+        public static void ExistError<T>(T value, 
+            Action<T,OAuthSimpleOption,JwtValue> action, 
+            OAuthSimpleOption options,
+            JwtValue jwt) where T : AuthorizationRolesBasic
+        {
+            if (value.Errors.Count == 0)
+            {
+                action(value, options, jwt);
+            }
+            else
+            {
+                jwt.Error = string.Join(" \n\n ", value.Errors);
+                jwt.StatusCode = StatusCodes.Status401Unauthorized;
+            }
+        }
+
+        public static void Valid(this AuthorizationRolesBasic roles, OAuthSimpleOption options)
+        {
+            if (roles.ExpireTimeMinutes <= 0 && options.DefaultExpireTimeMinutes <= 0)
+            {
+                throw new System.InvalidOperationException("ExpireTimeMinutes required");
+            }
         }
     }
 }

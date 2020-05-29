@@ -25,8 +25,9 @@ namespace test
             services.AddControllers();
             services.AddSimpleOAuth(option =>
             {
-                option.AddExpireTimeMinutes(10);
                 option.AddKeyToken("kl3fj8990asfd123klbvc7m243hjioa90142mkrtdsfd789a");
+                option.AddAuthRouter("/Auth");
+               // option.AddDefaultExpireTimeMinutes(10);
             });
 
             services.AddScoped<IAuthorizationRoles, AuthorizationRoles>();

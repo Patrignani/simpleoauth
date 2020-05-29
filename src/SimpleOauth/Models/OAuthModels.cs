@@ -53,8 +53,15 @@ namespace SimpleOAuth.Models
 
     public class AuthorizationRolesBasic
     {
+        public AuthorizationRolesBasic()
+        {
+            Errors = new List<string>();
+        }
+
         public bool Authorized {get;set;}
         public ICollection<Claim> Claims {get;set;}
+        public int ExpireTimeMinutes { get; set; }
+        public ICollection<string> Errors { get; set; }
 
     }
 
@@ -76,6 +83,7 @@ namespace SimpleOAuth.Models
     { 
         public string JsonReturn { get; set; }
         public int StatusCode { get; set; }
+        public string Error { get; set; }
     }
 
 }
